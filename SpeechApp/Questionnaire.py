@@ -28,6 +28,10 @@ questions = [
     Question(question_prompts[4], "c", "Encapsulation and Abstraction")
 ]
 
+positive_answ = [
+    "yes", "correct", "that's right", "that is right", "that's correct", "that is correct", "that's true", "that is true", "true"
+]
+
 users = [
     User("Alexander", "Alex", "ice cream"),
     User("John", "John", "John")
@@ -46,12 +50,14 @@ ALLOWED_ATTEMPTS = 3
 # check that recognition is correct
 def check_user(answer, rec, mic):
     checked = False
-    say("Say 'yes' if your answer was: " + str(answer))
+    say("Did you answered: " + str(answer))
     # reply = recognize(rec, mic)
     reply = listen(mic, rec, 3)
-    if reply["transcription"]:
-        if reply["transcription"] == "yes":
-            checked = True
+    for i in range(len(positive_answ)):
+        if reply["transcription"]:
+            if reply["transcription"] == positive_answ[i]:
+                checked = True
+                break
     return checked
 
 
@@ -71,6 +77,7 @@ def recognize(rec, mic):
         print("\nListening..")
         rec.adjust_for_ambient_noise(source)
         audio = rec.listen(source)
+        playsound('endof.wav')
 
     # set up the response object
     response = {
@@ -186,7 +193,7 @@ def check_credentials(microphone, recognizer):
     name = listen(microphone, recognizer, 3)
     for i in range(len(users)):
         if name["transcription"] == users[i].name:
-            say("What is your keyword?")
+            say("What is your password?")
             key = listen(microphone, recognizer, 3)
             if key["transcription"] == users[i].key:
                 is_correct["true"] = True
@@ -231,7 +238,7 @@ def login(microphone, recognizer, data):
         "id": 0
     }
     for i in range(ALLOWED_ATTEMPTS):
-        say("Please say 'login' or 'create new user'.")
+        say("Please say 'login', 'create new user' or 'exit'.")
         input = listen(microphone, recognizer, 3)
         if input["transcription"] == "login":
             credentials = check_credentials(microphone, recognizer)
@@ -267,7 +274,7 @@ def login(microphone, recognizer, data):
                             is_unique = True
 
                 if nickname["success"] and is_unique:
-                    say("What is your keyword?")
+                    say("What is your password?")
                     key = listen(microphone, recognizer, 3)
                     if key["success"]:
                         data.add(len(data),
@@ -290,10 +297,12 @@ def login(microphone, recognizer, data):
 def run_test(quest, recognizer, microphone):
     score = 0
     quest_num = 0
+    say("Welcome to the test! At any time you may say 'repeat' to repeat the question or 'exit' to quit the test.")
+    say("You should answer with a letter or with the whole answer.")
 
     for question in quest:
         playsound('sound.wav')
-        attempt = 1  # 2 attempt to answer
+        attempt = 1  # 2 attempts to answer
         quest_num += 1
         print_menu(quest_num, len(quest))
 
@@ -318,8 +327,8 @@ def run_test(quest, recognizer, microphone):
 
                     # if a user says Yes
                     if is_correct:
-                        if answer["transcription"] == str.lower(question.answer) or \
-                                answer["transcription"] == str.lower(question.short_answer):
+                        if str.lower(answer["transcription"]) == str.lower(question.answer) or \
+                                str.lower(answer["transcription"]) == str.lower(question.short_answer):
                             score += 1
                         break
                     else:
